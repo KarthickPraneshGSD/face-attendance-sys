@@ -85,21 +85,31 @@ async function handleAdminLogin() {
         toast('Login failed: ' + e.message, 'error');
     } finally { btn.disabled = false; btn.textContent = 'Sign In'; }
 }
-async function handleEmployeeLogin() {
+function handleEmployeeLogin() {
     const empId = document.getElementById('login-empid').value.trim();
     if (!empId) { toast('Enter your Employee ID', 'warning'); return; }
+
     // Verify employee exists
-    const emps = await getAllEmployees();
-    const found = emps.find(e => String(e.employee_id || '').toLowerCase() === empId.toLowerCase()
-        || String(e.id).toLowerCase() === empId.toLowerCase()
-        || String(e.name).toLowerCase() === empId.toLowerCase());
-    if (!found) { toast('Employee not found — check your ID or name', 'error'); return; }
-    signInEmployee(found.employee_id || found.id);
-    currentUser.name = found.name;
-    hideLoginScreen();
-    showSection('dashboard');
-    applyRoleUI();
-    toast('Welcome, ' + found.name + '!', 'success');
+    getAllEmployees().then(emps => {
+        const found = emps.find(e => String(e.employee_id || '').toLowerCase() === empId.toLowerCase()
+            || String(e.id).toLowerCase() === empId.toLowerCase()
+            || String(e.name).toLowerCase() === empId.toLowerCase());
+
+        if (!found) {
+            toast('Employee not found \u2014 check your ID or name', 'error');
+            return;
+        }
+
+        signInEmployee(found.employee_id || found.id);
+        currentUser.name = found.name;
+        hideLoginScreen();
+        showSection('dashboard');
+        applyRoleUI();
+        toast('Welcome, ' + found.name + '!', 'success');
+    }).catch(e => {
+        console.error("Login verification failed", e);
+        toast('Failed to verify ID. Please check connection.', 'error');
+    });
 }
 function applyRoleUI() {
     const admin = isAdmin();
@@ -579,20 +589,52 @@ function switchEnrollTab(tab) {
     }
 }
 
-function captureEnrollSnap() {
+async function captureEnrollSnap() {
+    if (!isAIReady) { toast('AI is still loading, please wait.', 'warning'); return; }
     const video = document.getElementById('enroll-video');
     if (!video.videoWidth) { toast('Camera not ready yet', 'warning'); return; }
-    const canvas = document.getElementById('enroll-snap-canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    canvas.toBlob(blob => {
-        enrollSnapBlob = blob;
-        const url = URL.createObjectURL(blob);
-        document.getElementById('snap-img').src = url;
-        document.getElementById('enroll-snap-preview').style.display = 'block';
-        toast('Photo captured! Click Enroll Now to continue.', 'success');
-    }, 'image/jpeg', 0.92);
+
+    // Validate that a human face is actually in the frame
+    const btn = document.querySelector('button[onclick="captureEnrollSnap()"]');
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Verifying face...';
+
+    try {
+        const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }));
+        if (!det) {
+            toast('No human face detected! Please position your face inside the oval.', 'error', 4000);
+            btn.disabled = false;
+            btn.textContent = oldText;
+            return; // reject capture
+        }
+
+        const canvas = document.getElementById('enroll-snap-canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // When drawing mirrored video to canvas, we need to flip the context horizontally
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0);
+
+        canvas.toBlob(blob => {
+            enrollSnapBlob = blob;
+            const url = URL.createObjectURL(blob);
+            document.getElementById('snap-img').src = url;
+            document.getElementById('enroll-snap-preview').style.display = 'block';
+            toast('Face captured securely! Click Enroll Now to continue.', 'success');
+            btn.disabled = false;
+            btn.textContent = oldText;
+        }, 'image/jpeg', 0.92);
+
+    } catch (e) {
+        console.error("Face validation error", e);
+        toast('Error validating face capture', 'error');
+        btn.disabled = false;
+        btn.textContent = oldText;
+    }
 }
 
 function toggleRegModal(show) {
