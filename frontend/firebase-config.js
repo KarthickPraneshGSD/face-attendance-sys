@@ -11,5 +11,13 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+// Force long-polling to avoid net::ERR_QUIC_PROTOCOL_ERROR.QUIC_NETWORK_IDLE_TIMEOUT 
+// which happens when proxies or aggressive networks drop idle WebSockets/QUIC streams.
+firebase.firestore().settings({
+    experimentalForceLongPolling: true,
+    merge: true
+});
+
 const fsdb = firebase.firestore();
 const auth = firebase.auth();
