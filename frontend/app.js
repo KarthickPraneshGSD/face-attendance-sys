@@ -315,8 +315,8 @@ const punchCooldown = new Map();
 // ====== Liveness Detection ======
 // livenessState per employee: { state:'idle'|'waiting'|'confirmed', ear:[], timer:null }
 const livenessMap = new Map();
-const EAR_BLINK_THRESH = 0.22;  // below this = eye closed
-const EAR_CONSEC_FRAMES = 2;    // frames eye must stay closed to count as blink
+const EAR_BLINK_THRESH = 0.26;  // below this = eye closed (raised for better sensitivity)
+const EAR_CONSEC_FRAMES = 1;    // frames eye must stay closed to count as blink (1 frame is better for slow webcams)
 
 function computeEAR(eye) {
     // eye = array of 6 {x,y} landmark points
@@ -832,13 +832,54 @@ async function refreshEmployees() {
     }
     grid.innerHTML = filtered.map(emp => `
         <div class="employee-card">
-            <button class="delete-btn" onclick="confirmDelete(${emp.id}, '${emp.name.replace(/'/g, "\\'")}')">✕</button>
+            <div class="emp-actions admin-only">
+                <button class="icon-btn edit" onclick="openEditEmpModal('${emp.id}')" title="Edit Employee">✏️</button>
+                <button class="icon-btn delete" onclick="confirmDelete('${emp.id}', '${emp.name.replace(/'/g, "\\'")}')" title="Delete Employee">🗑️</button>
+            </div>
             <div class="emp-avatar">${emp.initials || emp.name[0]}</div>
             <div style="font-weight:700;font-size:15px;color:#e2e8f0;margin-bottom:4px">${emp.name}</div>
             <div style="font-size:13px;color:#64748b;margin-bottom:10px">${emp.role || 'N/A'}</div>
             <span class="chip">${emp.department || 'General'}</span>
             <div style="margin-top:10px;font-size:12px;color:#22d3ee;font-weight:600">${(hours[emp.id] || 0).toFixed(1)} hrs total</div>
         </div>`).join('');
+    applyRoleUI(); // hide admin buttons if not admin
+}
+
+// Edit Employee handling
+function openEditEmpModal(id) {
+    if (!isAdmin()) { toast('Admin access required', 'error'); return; }
+    const emp = allEmployees.find(e => String(e.id) === String(id));
+    if (!emp) return;
+    document.getElementById('edit-emp-id').value = emp.id;
+    document.getElementById('edit-emp-name').value = emp.name || '';
+    document.getElementById('edit-emp-role').value = emp.role || '';
+    document.getElementById('edit-emp-dept').value = emp.department || '';
+    document.getElementById('edit-emp-modal').classList.add('open');
+}
+
+function closeEditEmpModal() {
+    document.getElementById('edit-emp-modal').classList.remove('open');
+}
+
+async function saveEmployeeEdit() {
+    if (!isAdmin()) return;
+    const id = document.getElementById('edit-emp-id').value;
+    const name = document.getElementById('edit-emp-name').value.trim();
+    if (!id || !name) { toast('Name is required', 'warning'); return; }
+    try {
+        await fsdb.collection('employees').doc(String(id)).update({
+            name,
+            role: document.getElementById('edit-emp-role').value.trim(),
+            department: document.getElementById('edit-emp-dept').value.trim(),
+            initials: name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+        });
+        closeEditEmpModal();
+        toast('Employee details updated', 'success');
+        refreshEmployees();
+        buildMatcher(); // Rebuild matcher because name might be used as label
+    } catch (e) {
+        toast('Failed to update: ' + e.message, 'error');
+    }
 }
 function setDept(d) { activeDept = d; refreshEmployees(); }
 async function confirmDelete(id, name) {

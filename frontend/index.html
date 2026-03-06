@@ -601,6 +601,78 @@
             background-clip: text
         }
 
+        /* Employee Cards */
+        .employee-card {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            transition: transform .2s, border-color .2s;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, .3);
+        }
+
+        .emp-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .employee-card:hover .emp-actions {
+            opacity: 1;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .icon-btn.delete:hover {
+            background: rgba(244, 63, 94, 0.2);
+            color: #f43f5e;
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.3);
+        }
+
+        .icon-btn.edit:hover {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .emp-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border: 2px solid rgba(99, 102, 241, .4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            color: #e2e8f0;
+            margin: 0 auto 12px;
+        }
+
         /* Chart container */
         .chart-container {
             position: relative;
@@ -1000,6 +1072,36 @@
                         <button onclick="deleteLog()"
                             style="background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.25);color:#f43f5e;border-radius:11px;padding:11px 18px;cursor:pointer;font-weight:700;font-size:13px">🗑
                             Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Edit Modal -->
+        <div id="edit-emp-modal" class="modal-bg">
+            <div class="modal" style="max-width:400px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                    <h2 style="font-size:17px;font-weight:700" class="gradient-text">👤 Edit Employee</h2>
+                    <button onclick="closeEditEmpModal()"
+                        style="background:none;border:none;color:#64748b;cursor:pointer;font-size:20px">✕</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:13px">
+                    <input type="hidden" id="edit-emp-id">
+                    <div>
+                        <span class="label">Full Name</span>
+                        <input id="edit-emp-name" class="input-field" placeholder="Full Name">
+                    </div>
+                    <div>
+                        <span class="label">Role / Title</span>
+                        <input id="edit-emp-role" class="input-field" placeholder="Role">
+                    </div>
+                    <div>
+                        <span class="label">Department</span>
+                        <input id="edit-emp-dept" class="input-field" placeholder="Department">
+                    </div>
+                    <div style="display:flex;gap:9px;margin-top:6px">
+                        <button onclick="saveEmployeeEdit()" class="btn-primary" style="flex:1;justify-content:center">✓
+                            Save Changes</button>
                     </div>
                 </div>
             </div>
