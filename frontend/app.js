@@ -464,6 +464,9 @@ async function handleAttendance(name, landmarks) {
         toast(emp.name + ' punched ' + status + (isLate ? ' (Late)' : ''), 'success');
         playPunchSound(status === 'IN');
         speakName(emp.name, status);
+
+        // Auto-stop the camera after a successful punch to prevent double scanning
+        stopKiosk();
     } catch (e) {
         toast('Attendance failed: ' + e.message, 'error');
         punchCooldown.delete(name);
