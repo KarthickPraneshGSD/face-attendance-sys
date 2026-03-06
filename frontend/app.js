@@ -427,18 +427,14 @@ async function buildMatcher() {
 async function handleAttendance(name, landmarks) {
     const now = Date.now();
     const lastPunch = punchCooldown.get(name) || 0;
-    if (now - lastPunch < 10000) {
-        // During cooldown, keep running liveness check so blink is captured even if recognition fires again
-        if (landmarks) checkLivenessFrame(name, landmarks);
-        return;
-    }
-    if (processingSet.has(name)) return;
-
-    // Liveness gate: bypass strict blink requirement to ensure reliable punches
-    // We still log the liveness state if detecting, but we no longer block the punch
+    // Liveness gate: bypass strict blink requirement for speed
     const ls = getLivenessState(name);
     if (ls.state === 'idle') { startLivenessCheck(name); }
     if (landmarks) checkLivenessFrame(name, landmarks);
+
+    // CRITICAL: Stop the kiosk immediately to prevent double-punches
+    // while we process the rest of the attendance logic.
+    stopKiosk();
 
     processingSet.add(name);
     punchCooldown.set(name, now);
@@ -466,7 +462,7 @@ async function handleAttendance(name, landmarks) {
         speakName(emp.name, status);
 
         // Auto-stop the camera after a successful punch to prevent double scanning
-        stopKiosk();
+        
     } catch (e) {
         toast('Attendance failed: ' + e.message, 'error');
         punchCooldown.delete(name);
