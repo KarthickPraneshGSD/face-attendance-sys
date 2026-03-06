@@ -1008,9 +1008,9 @@
                         style="width:38px;height:38px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,0.3)">
                         <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
                             <div
-                                style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:12px;margin-top:20px">
+                                style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:12px;margin-top:20px;margin-bottom:10px">
                                 <div
-                                    style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                                    style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
                                     <span id="role-badge"
                                         style="font-size:12px;font-weight:700;color:#818cf8;display:flex;align-items:center;gap:6px">
                                         <span style="width:6px;height:6px;background:#818cf8;border-radius:50%"></span>
@@ -1077,22 +1077,27 @@
                         </button>
                     </nav>
 
-                    <div class="glass" style="padding:14px;border-radius:13px;margin-top:auto">
+                    <div class="glass"
+                        style="padding:16px;border-radius:18px;margin-top:auto;border:1px solid rgba(255,255,255,0.05)">
                         <div
-                            style="font-size:10px;color:#334155;font-weight:700;margin-bottom:6px;letter-spacing:.06em">
-                            SYSTEM
-                            STATUS</div>
-                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
-                            <div style="width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0"
-                                id="ai-dot"></div>
-                            <span style="font-size:11px;color:#64748b" id="ai-text">Loading AI...</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
-                            <div style="width:7px;height:7px;border-radius:50%;background:#334155;flex-shrink:0"></div>
-                            <span style="font-size:11px;color:#475569" id="gps-text">GPS: Off</span>
+                            style="font-size:10px;color:#475569;font-weight:800;margin-bottom:12px;letter-spacing:.1em">
+                            SYSTEM STATUS</div>
+                        <div
+                            style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;background:rgba(0,0,0,0.15);padding:10px;border-radius:10px">
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 10px #f59e0b"
+                                    id="ai-dot"></div>
+                                <span style="font-size:11px;color:#94a3b8;font-weight:600" id="ai-text">Loading
+                                    AI...</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px">
+                                <div style="width:8px;height:8px;border-radius:50%;background:#475569" id="gps-dot">
+                                </div>
+                                <span style="font-size:11px;color:#64748b;font-weight:600" id="gps-text">GPS: Off</span>
+                            </div>
                         </div>
                         <button onclick="toggleTheme()"
-                            style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#94a3b8;border-radius:9px;padding:7px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-weight:600;transition:all .2s">
+                            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;border-radius:10px;padding:9px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;transition:0.2s">
                             <span id="theme-icon">☀️</span> Toggle Theme
                         </button>
                     </div>
