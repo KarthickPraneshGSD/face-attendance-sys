@@ -427,11 +427,11 @@ async function handleAttendance(name, landmarks) {
     }
     if (processingSet.has(name)) return;
 
-    // Liveness gate: start or check blink
+    // Liveness gate: bypass strict blink requirement to ensure reliable punches
+    // We still log the liveness state if detecting, but we no longer block the punch
     const ls = getLivenessState(name);
-    if (ls.state === 'idle') { startLivenessCheck(name); return; }
+    if (ls.state === 'idle') { startLivenessCheck(name); }
     if (landmarks) checkLivenessFrame(name, landmarks);
-    if (ls.state !== 'confirmed') return;  // still waiting for blink
 
     processingSet.add(name);
     punchCooldown.set(name, now);
@@ -527,15 +527,14 @@ async function runDetect() {
         dets.forEach(d => {
             const m = faceMatcher.findBestMatch(d.descriptor);
             const b = d.detection.box, known = m.label !== 'unknown';
-            const ls = known ? getLivenessState(m.label) : null;
-            // Box colour: green=confirmed, yellow=waiting blink, red=unknown
-            ctx.strokeStyle = known ? (ls.state === 'confirmed' ? '#10b981' : '#f59e0b') : '#f43f5e';
+            // Box colour: green=confirmed, red=unknown
+            ctx.strokeStyle = known ? '#10b981' : '#f43f5e';
             ctx.lineWidth = 2;
             ctx.strokeRect(b.x, b.y, b.width, b.height);
-            ctx.fillStyle = known ? (ls.state === 'confirmed' ? 'rgba(16,185,129,.8)' : 'rgba(245,158,11,.8)') : 'rgba(244,63,94,.8)';
+            ctx.fillStyle = known ? 'rgba(16,185,129,.8)' : 'rgba(244,63,94,.8)';
             ctx.fillRect(b.x, b.y - 26, b.width, 26);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Inter';
-            const label = m.label + (known ? (ls.state === 'waiting' ? ' 👁' : ' ✓') : ' ?');
+            const label = m.label + (known ? ' ✓' : ' ?');
             ctx.fillText(label, b.x + 5, b.y - 9);
             if (known) handleAttendance(m.label, d.landmarks);
         });
