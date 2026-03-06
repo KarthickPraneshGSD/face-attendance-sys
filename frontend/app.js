@@ -27,12 +27,19 @@ const getAttendance = async () => {
     return snap.docs.map(d => ({ ...d.data(), id: d.id }));
 };
 const getLastPunch = async id => {
+    // Avoid orderBy('timestamp') here to prevent Firestore Composite Index errors.
+    // We fetch the employee's punches and sort them locally to find the latest.
     const snap = await fsdb.collection('attendance')
         .where('employee_id', '==', id)
-        .orderBy('timestamp', 'desc')
-        .limit(1)
         .get();
-    return snap.empty ? null : { ...snap.docs[0].data(), id: snap.docs[0].id };
+
+    if (snap.empty) return null;
+
+    // Convert to array and sort descending by timestamp in memory
+    const docs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    docs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    return docs[0];
 };
 // Update a log record (used by attendance correction)
 const updateAttendance = (id, data) =>
