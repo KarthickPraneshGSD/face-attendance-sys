@@ -1007,100 +1007,102 @@
                     <div
                         style="width:38px;height:38px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(99,102,241,0.3)">
                         <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
-                            <div
-                                style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:12px;margin-top:20px;margin-bottom:10px">
-                                <div
-                                    style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                                    <span id="role-badge"
-                                        style="font-size:12px;font-weight:700;color:#818cf8;display:flex;align-items:center;gap:6px">
-                                        <span style="width:6px;height:6px;background:#818cf8;border-radius:50%"></span>
-                                        Administrator
-                                    </span>
-                                </div>
-                                <button onclick="signOut()"
-                                    style="width:100%;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.15);color:#f43f5e;font-size:11px;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;transition:0.2s;display:flex;align-items:center;justify-content:center;gap:6px">
-                                    Sign Out ↩
-                                </button>
-                            </div>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                     </div>
-
-                    <nav style="flex:1">
-                        <div
-                            style="font-size:10px;font-weight:700;color:#334155;letter-spacing:.1em;padding:0 14px;margin-bottom:7px">
-                            MAIN</div>
-                        <button class="nav-item active" id="nav-dashboard" onclick="showSection('dashboard')">
-                            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                            </svg>
-                            Dashboard
-                        </button>
-                        <button class="nav-item admin-only" id="nav-kiosk" onclick="showSection('kiosk')">
-                            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Kiosk Mode
-                        </button>
-                        <button class="nav-item admin-only" id="nav-employees" onclick="requirePin('employees')">
-                            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Employees
-                        </button>
-                        <button class="nav-item admin-only" id="nav-analytics" onclick="showSection('analytics')">
-                            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Analytics
-                        </button>
-                        <div class="admin-only"
-                            style="font-size:10px;font-weight:700;color:#334155;letter-spacing:.1em;padding:0 14px;margin:18px 0 7px">
-                            ADMIN</div>
-                        <button class="nav-item admin-only" id="nav-settings" onclick="requirePin('settings')">
-                            <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Settings
-                        </button>
-                    </nav>
-
-                    <div class="glass"
-                        style="padding:16px;border-radius:18px;margin-top:auto;border:1px solid rgba(255,255,255,0.05)">
-                        <div
-                            style="font-size:10px;color:#475569;font-weight:800;margin-bottom:12px;letter-spacing:.1em">
-                            SYSTEM STATUS</div>
-                        <div
-                            style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;background:rgba(0,0,0,0.15);padding:10px;border-radius:10px">
-                            <div style="display:flex;align-items:center;gap:10px">
-                                <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 10px #f59e0b"
-                                    id="ai-dot"></div>
-                                <span style="font-size:11px;color:#94a3b8;font-weight:600" id="ai-text">Loading
-                                    AI...</span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:10px">
-                                <div style="width:8px;height:8px;border-radius:50%;background:#475569" id="gps-dot">
-                                </div>
-                                <span style="font-size:11px;color:#64748b;font-weight:600" id="gps-text">GPS: Off</span>
-                            </div>
+                    <div>
+                        <div style="font-weight:800;font-size:16px;letter-spacing:-0.5px" class="gradient-text">FaceSync
+                            AI</div>
+                        <div style="font-size:10px;color:#475569;font-weight:700;letter-spacing:.08em">ENTERPRISE 2.0
                         </div>
-                        <button onclick="toggleTheme()"
-                            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;border-radius:10px;padding:9px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;transition:0.2s">
-                            <span id="theme-icon">☀️</span> Toggle Theme
-                        </button>
                     </div>
+                </div>
+
+                <div
+                    style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:12px;margin-top:20px;margin-bottom:10px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                        <span id="role-badge"
+                            style="font-size:12px;font-weight:700;color:#818cf8;display:flex;align-items:center;gap:6px">
+                            <span style="width:6px;height:6px;background:#818cf8;border-radius:50%"></span>
+                            Administrator
+                        </span>
+                    </div>
+                    <button onclick="signOut()"
+                        style="width:100%;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.15);color:#f43f5e;font-size:11px;padding:8px;border-radius:8px;cursor:pointer;font-weight:700;transition:0.2s;display:flex;align-items:center;justify-content:center;gap:6px">
+                        Sign Out ↩
+                    </button>
+                </div>
+            </div>
+
+            <nav style="flex:1">
+                <div
+                    style="font-size:10px;font-weight:700;color:#334155;letter-spacing:.1em;padding:0 14px;margin-bottom:7px">
+                    MAIN</div>
+                <button class="nav-item active" id="nav-dashboard" onclick="showSection('dashboard')">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    Dashboard
+                </button>
+                <button class="nav-item admin-only" id="nav-kiosk" onclick="showSection('kiosk')">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Kiosk Mode
+                </button>
+                <button class="nav-item admin-only" id="nav-employees" onclick="requirePin('employees')">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Employees
+                </button>
+                <button class="nav-item admin-only" id="nav-analytics" onclick="showSection('analytics')">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Analytics
+                </button>
+                <div class="admin-only"
+                    style="font-size:10px;font-weight:700;color:#334155;letter-spacing:.1em;padding:0 14px;margin:18px 0 7px">
+                    ADMIN</div>
+                <button class="nav-item admin-only" id="nav-settings" onclick="requirePin('settings')">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Settings
+                </button>
+            </nav>
+
+            <div class="glass"
+                style="padding:16px;border-radius:18px;margin-top:auto;border:1px solid rgba(255,255,255,0.05)">
+                <div style="font-size:10px;color:#475569;font-weight:800;margin-bottom:12px;letter-spacing:.1em">SYSTEM
+                    STATUS</div>
+                <div
+                    style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;background:rgba(0,0,0,0.15);padding:10px;border-radius:10px">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 10px #f59e0b"
+                            id="ai-dot"></div>
+                        <span style="font-size:11px;color:#94a3b8;font-weight:600" id="ai-text">Loading AI...</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div style="width:8px;height:8px;border-radius:50%;background:#475569" id="gps-dot"></div>
+                        <span style="font-size:11px;color:#64748b;font-weight:600" id="gps-text">GPS: Off</span>
+                    </div>
+                </div>
+                <button onclick="toggleTheme()"
+                    style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;border-radius:10px;padding:9px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;transition:0.2s">
+                    <span id="theme-icon">☀️</span> Toggle Theme
+                </button>
+            </div>
         </aside>
 
         <!-- Sidebar Mobile Overlay -->
