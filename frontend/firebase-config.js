@@ -11,25 +11,5 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
-// Force long-polling to prevent routers/proxies from dropping idle QUIC WebSockets,
-// which causes the net::ERR_QUIC_PROTOCOL_ERROR loop in the console.
-firebase.firestore().settings({
-    experimentalForceLongPolling: true,
-    merge: true
-});
-
 const fsdb = firebase.firestore();
-
-// Enable offline persistence so that if the network drops QUIC connections,
-// the app continues to function seamlessly from cache while it auto-reconnects.
-fsdb.enablePersistence()
-    .catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.warn('Multiple tabs open, persistence can only be enabled in one tab at a a time.');
-        } else if (err.code == 'unimplemented') {
-            console.warn('The current browser does not support all of the features required to enable persistence.');
-        }
-    });
-
 const auth = firebase.auth();
