@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+*.env
+
+# Backend
+backend/__pycache__/
+backend/*.pyc
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
