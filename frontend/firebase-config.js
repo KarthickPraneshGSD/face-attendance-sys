@@ -16,6 +16,7 @@ firebase.initializeApp(firebaseConfig);
 // which happens when proxies or aggressive networks drop idle WebSockets/QUIC streams.
 firebase.firestore().settings({
     experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: false,
     merge: true
 });
 
