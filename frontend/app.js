@@ -151,6 +151,8 @@ let chart7day = null;
 let chartDept = null;
 let settingsListener = null; // for real-time sync
 let lastSyncTimestamp = null; // for UI feedback
+let currentSyncState = 'offline'; // 'offline' | 'initializing' | 'synced' | 'denied' | 'reconnecting'
+
 
 
 // ====== Audio Feedback ======
@@ -203,7 +205,9 @@ function toast(msg, type = 'info', duration = 4000) {
 // ====== Settings ======
 async function loadSettings(forceRestart = false) {
     console.log("🔄 Initializing Settings Sync... (Force: " + forceRestart + ")");
-    updateSettingsUI('initializing');
+    currentSyncState = 'initializing';
+    updateSettingsUI();
+
     if (forceRestart && settingsListener) {
         settingsListener(); // Unsubscribe existing listener
         settingsListener = null;
@@ -216,7 +220,7 @@ async function loadSettings(forceRestart = false) {
             campusHQ = c.campusHQ || campusHQ;
             geofenceRadius = c.geofenceRadius || 500;
             shiftStart = c.shiftStart || '09:00';
-            adminPin = c.adminPin || '1234';
+            adminPin = String(c.adminPin || '1234').trim();
             overtimeHours = c.overtimeHours || 9;
             confidenceThresh = c.confidenceThresh || 0.4;
             console.log("✅ Local settings loaded:", adminPin);
@@ -229,11 +233,15 @@ async function loadSettings(forceRestart = false) {
         if (initialDoc.exists) {
             const c = initialDoc.data();
             lastSyncTimestamp = new Date();
+            currentSyncState = 'synced'; // Mark as synced if fetch succeeds
             applySettingsObject(c);
             console.log("☁️ Initial cloud settings fetched:", adminPin);
+        } else {
+            currentSyncState = 'offline'; // Document missing
         }
     } catch (e) { 
         console.warn("Cloud fetch pending authentication or disconnected", e.message); 
+        // Don't change state here yet, wait for listener
     }
 
     // 3. Setup Persistent Real-time Listener (if not already running)
@@ -242,18 +250,20 @@ async function loadSettings(forceRestart = false) {
             if (doc.exists) {
                 const c = doc.data();
                 lastSyncTimestamp = new Date();
+                currentSyncState = 'synced';
                 applySettingsObject(c);
                 console.log("⚡ Real-time settings update received:", adminPin);
-                updateSettingsUI(true);
+                updateSettingsUI();
             }
         }, e => {
             console.error("❌ Sync Error:", e.code, e.message);
             if (e.code === 'permission-denied') {
-                updateSettingsUI('denied');
+                currentSyncState = 'denied';
                 toast('Access Denied: Please check Firestore rules in Console', 'error', 8000);
             } else {
-                updateSettingsUI(false);
+                currentSyncState = 'reconnecting';
             }
+            updateSettingsUI();
             // Auto-retry listener if it dies (e.g. network change) with a small delay
             settingsListener = null; 
             setTimeout(() => { if (!settingsListener) loadSettings(); }, 5000);
@@ -274,7 +284,7 @@ function applySettingsObject(c) {
     localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
 }
 
-function updateSettingsUI(isSynced = null) {
+function updateSettingsUI() {
     const hl = document.getElementById('hq-lat'); if (hl) hl.value = (campusHQ.lat || 0);
     const hln = document.getElementById('hq-lng'); if (hln) hln.value = (campusHQ.lng || 0);
     const fr = document.getElementById('fence-radius'); if (fr) fr.value = geofenceRadius;
@@ -290,14 +300,14 @@ function updateSettingsUI(isSynced = null) {
     // Sync status indicator
     const syncStatus = document.getElementById('sync-status');
     if (syncStatus) {
-        if (isSynced === true) {
+        if (currentSyncState === 'synced') {
             syncStatus.innerHTML = '<span style="color:#10b981">● Cloud Connected</span>';
             console.log("PIN Synced: " + adminPin);
-        } else if (isSynced === 'denied') {
+        } else if (currentSyncState === 'denied') {
             syncStatus.innerHTML = '<span style="color:#f43f5e">● Access Denied (Check Rules)</span>';
-        } else if (isSynced === false) {
+        } else if (currentSyncState === 'reconnecting') {
             syncStatus.innerHTML = '<span style="color:#f59e0b">● Reconnecting...</span>';
-        } else if (isSynced === 'initializing') {
+        } else if (currentSyncState === 'initializing') {
             syncStatus.innerHTML = '<span style="color:#818cf8">● Initializing Sync...</span>';
         } else {
             syncStatus.innerHTML = '<span style="color:#64748b">● Local Cache Only</span>';
