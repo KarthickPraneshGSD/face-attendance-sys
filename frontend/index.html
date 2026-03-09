@@ -592,6 +592,13 @@
             border-color: rgba(99, 102, 241, .4)
         }
 
+        /* Responsive Dashboard Grid */
+        @media (max-width: 1024px) {
+            .dashboard-main-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
         /* Gradient text */
         .gradient-text {
             background: linear-gradient(135deg, #818cf8, #c084fc);
@@ -1244,12 +1251,19 @@
                     <p style="font-size:13px;color:#475569;margin-top:3px">Live attendance overview</p>
                 </div>
                 <div id="dashboard-grid"
-                    style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px">
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px">
+
                     <div class="stat-card indigo">
                         <div
                             style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;margin-bottom:8px">
                             TOTAL TEAM</div>
                         <div id="s-total" style="font-size:30px;font-weight:800;color:#e2e8f0">0</div>
+                    </div>
+                    <div class="stat-card cyan" style="border-left:4px solid #06b6d4">
+                        <div
+                            style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;margin-bottom:8px">
+                            🟢 WHO'S IN NOW</div>
+                        <div id="s-active" style="font-size:30px;font-weight:800;color:#06b6d4">0</div>
                     </div>
                     <div class="stat-card emerald">
                         <div
@@ -1276,29 +1290,41 @@
                         <div id="s-ot" style="font-size:30px;font-weight:800;color:#f97316">0</div>
                     </div>
                 </div>
-                <div class="glass" style="overflow:hidden">
-                    <div
-                        style="padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-                        <h2 style="font-weight:700;font-size:15px;color:#e2e8f0">Attendance Logs</h2>
-                        <input class="search-box" id="log-search" placeholder="🔍 Search by name..."
-                            oninput="filterLogs()" style="width:220px">
+                <div style="display:grid;grid-template-columns:3fr 1fr;gap:18px;align-items:start" class="dashboard-main-grid">
+                    <div class="glass" style="overflow:hidden">
+                        <div
+                            style="padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                            <h2 style="font-weight:700;font-size:15px;color:#e2e8f0">Attendance Logs</h2>
+                            <input class="search-box" id="log-search" placeholder="🔍 Search by name..."
+                                oninput="filterLogs()" style="width:220px">
+                        </div>
+                        <div style="overflow-x:auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Date</th>
+                                        <th>Punch In</th>
+                                        <th>Punch Out</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                        <th>Location</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="log-table"></tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div style="overflow-x:auto">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Employee</th>
-                                    <th>Date</th>
-                                    <th>Punch In</th>
-                                    <th>Punch Out</th>
-                                    <th>Duration</th>
-                                    <th>Status</th>
-                                    <th>Location</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="log-table"></tbody>
-                        </table>
+
+                    <!-- Live Activity Ticker -->
+                    <div class="glass" style="padding:18px">
+                         <h2 style="font-weight:700;font-size:14px;color:#e2e8f0;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+                            📡 Live Activity
+                        </h2>
+                        <div id="activity-ticker" style="display:flex;flex-direction:column;gap:12px">
+                            <div style="font-size:12px;color:#475569;text-align:center;padding:20px">Waiting for activity...</div>
+                        </div>
                     </div>
                 </div>
             </section>

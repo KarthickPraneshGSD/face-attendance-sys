@@ -915,15 +915,54 @@ async function refreshDashboard() {
     const todayLogs = logs.filter(l => new Date(l.timestamp).toDateString() === today);
     const uniqueToday = new Set(todayLogs.map(l => l.employee_id));
     const lateToday = new Set(todayLogs.filter(l => l.status === 'IN' && l.late).map(l => l.employee_id));
+    
+    // Calculate Active (Who's In Now)
+    const allSessions = buildSessions(logs);
+    const activeNow = allSessions.filter(s => s.status === 'IN' && s.dur === 'Active').length;
+
     const todaySessions = buildSessions(todayLogs);
     const otToday = todaySessions.filter(s => s.ot).length;
+    
     document.getElementById('s-total').textContent = emps.length;
     document.getElementById('s-present').textContent = uniqueToday.size;
     document.getElementById('s-rate').textContent = emps.length ? Math.round(uniqueToday.size / emps.length * 100) + '%' : '0%';
     document.getElementById('s-late').textContent = lateToday.size;
+    
+    const activeEl = document.getElementById('s-active');
+    if (activeEl) activeEl.textContent = activeNow;
+    
     const otEl = document.getElementById('s-ot');
     if (otEl) otEl.textContent = otToday;
+    
     renderLogTable(logs);
+    renderActivityTicker(logs);
+}
+
+function renderActivityTicker(logs) {
+    const ticker = document.getElementById('activity-ticker');
+    if (!ticker) return;
+    
+    // Sort logs by timestamp descending and take top 8
+    const recent = logs.slice().sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 8);
+    
+    if (!recent.length) {
+        ticker.innerHTML = '<div style="font-size:12px;color:#475569;text-align:center;padding:20px">No activity yet</div>';
+        return;
+    }
+
+    ticker.innerHTML = recent.map(log => {
+        const time = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isIn = log.status === 'IN';
+        return `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(255,255,255,0.03)">
+                <div style="width:8px;height:8px;border-radius:50%;background:${isIn ? '#10b981' : '#f59e0b'};flex-shrink:0"></div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${log.name}</div>
+                    <div style="font-size:10px;color:#64748b">${isIn ? 'Punched IN' : 'Punched OUT'} • ${time}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 let currentSessions = [];
