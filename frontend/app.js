@@ -200,58 +200,63 @@ function toast(msg, type = 'info', duration = 4000) {
 // ====== Settings ======
 // ====== Settings ======
 async function loadSettings() {
+    console.log("🔄 Initializing Settings Sync...");
     // 1. Load from Local Storage first as a fast fallback
     const local = localStorage.getItem('fsSett');
     if (local) {
-        const c = JSON.parse(local);
-        campusHQ = c.campusHQ || campusHQ;
-        geofenceRadius = c.geofenceRadius || 500;
-        shiftStart = c.shiftStart || '09:00';
-        adminPin = c.adminPin || '1234';
-        overtimeHours = c.overtimeHours || 9;
-        confidenceThresh = c.confidenceThresh || 0.4;
-    }
-
-    // 2. Initial Fetch and Setup Real-time Sync from Firestore
-    try {
-        // Initial fetch to guarantee data before the function returns
-        const initialDoc = await fsdb.collection('settings').doc('global').get();
-        if (initialDoc.exists) {
-            const c = initialDoc.data();
+        try {
+            const c = JSON.parse(local);
             campusHQ = c.campusHQ || campusHQ;
             geofenceRadius = c.geofenceRadius || 500;
             shiftStart = c.shiftStart || '09:00';
             adminPin = c.adminPin || '1234';
             overtimeHours = c.overtimeHours || 9;
             confidenceThresh = c.confidenceThresh || 0.4;
-            localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
-            updateSettingsUI();
-        }
+            console.log("✅ Local settings loaded:", adminPin);
+        } catch(e) { console.warn("Stale local cache", e); }
+    }
 
-        // Setup listener for future changes
-        if (settingsListener) settingsListener(); 
+    // 2. Initial Fetch from Firestore
+    try {
+        const initialDoc = await fsdb.collection('settings').doc('global').get();
+        if (initialDoc.exists) {
+            const c = initialDoc.data();
+            applySettingsObject(c);
+            console.log("☁️ Initial cloud settings fetched:", adminPin);
+        }
+    } catch (e) { 
+        console.warn("Cloud fetch pending authentication or disconnected", e.message); 
+    }
+
+    // 3. Setup Persistent Real-time Listener (if not already running)
+    if (!settingsListener) {
         settingsListener = fsdb.collection('settings').doc('global').onSnapshot(doc => {
             if (doc.exists) {
                 const c = doc.data();
-                campusHQ = c.campusHQ || campusHQ;
-                geofenceRadius = c.geofenceRadius || 500;
-                shiftStart = c.shiftStart || '09:00';
-                adminPin = c.adminPin || '1234';
-                overtimeHours = c.overtimeHours || 9;
-                confidenceThresh = c.confidenceThresh || 0.4;
-                localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
+                applySettingsObject(c);
+                console.log("⚡ Real-time settings update received:", adminPin);
                 updateSettingsUI(true);
             }
         }, e => {
-            console.warn("Real-time settings sync pending authentication...");
+            console.error("❌ Sync Error:", e.message);
             updateSettingsUI(false);
+            // Auto-retry listener if it dies (e.g. network change)
+            settingsListener = null; 
         });
-    } catch (e) { 
-        console.error("Failed to setup settings sync", e); 
-        updateSettingsUI(false);
     }
 
     updateSettingsUI();
+}
+
+function applySettingsObject(c) {
+    if (!c) return;
+    campusHQ = c.campusHQ || campusHQ;
+    geofenceRadius = c.geofenceRadius || 500;
+    shiftStart = c.shiftStart || '09:00';
+    adminPin = String(c.adminPin || '1234');
+    overtimeHours = c.overtimeHours || 9;
+    confidenceThresh = c.confidenceThresh || 0.4;
+    localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
 }
 
 function updateSettingsUI(isSynced = null) {
