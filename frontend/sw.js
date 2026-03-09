@@ -1,4 +1,4 @@
-const CACHE = 'facesync-v4';
+const CACHE = 'facesync-v5';
 
 self.addEventListener('install', e => {
     self.skipWaiting();

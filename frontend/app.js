@@ -244,8 +244,9 @@ async function loadSettings(forceRestart = false) {
         }, e => {
             console.error("❌ Sync Error:", e.message);
             updateSettingsUI(false);
-            // Auto-retry listener if it dies (e.g. network change)
+            // Auto-retry listener if it dies (e.g. network change) with a small delay
             settingsListener = null; 
+            setTimeout(() => loadSettings(), 3000);
         });
     }
 
@@ -257,7 +258,7 @@ function applySettingsObject(c) {
     campusHQ = c.campusHQ || campusHQ;
     geofenceRadius = c.geofenceRadius || 500;
     shiftStart = c.shiftStart || '09:00';
-    adminPin = String(c.adminPin || '1234');
+    adminPin = String(c.adminPin || '1234').trim();
     overtimeHours = c.overtimeHours || 9;
     confidenceThresh = c.confidenceThresh || 0.4;
     localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
@@ -302,7 +303,7 @@ async function saveSettings() {
     };
     geofenceRadius = parseInt(document.getElementById('fence-radius').value) || 500;
     shiftStart = document.getElementById('shift-time').value || '09:00';
-    adminPin = document.getElementById('admin-pin').value || '1234';
+    adminPin = (document.getElementById('admin-pin').value || '1234').trim();
     overtimeHours = parseFloat(document.getElementById('ot-hours').value) || 9;
     confidenceThresh = parseFloat(document.getElementById('conf-thresh').value) || 0.4;
     const ll = document.getElementById('light-level');
@@ -1201,6 +1202,7 @@ function showSection(name) {
     if (name === 'employees') refreshEmployees();
     else if (name === 'dashboard') refreshDashboard();
     else if (name === 'analytics') refreshAnalytics();
+    else if (name === 'settings') updateSettingsUI();
 }
 
 // ====== Clock ======
@@ -1259,6 +1261,14 @@ window.onload = async () => {
             if (adminOnly && !isAdmin()) { toast('Admin only', 'warning'); return; }
             showSection(map[key]);
             toast('Shortcut: ' + map[key].charAt(0).toUpperCase() + map[key].slice(1), 'info', 1500);
+        }
+    });
+
+    // Auto-resume sync when returning to app (fixes background sleep on mobile)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && isAdmin()) {
+            console.log("📱 App focused — verifying cloud sync...");
+            loadSettings(true);
         }
     });
 };
