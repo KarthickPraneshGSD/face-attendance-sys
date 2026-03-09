@@ -84,6 +84,7 @@ async function handleAdminLogin() {
     btn.disabled = true; btn.textContent = 'Signing in...';
     try {
         await signInAdmin(email, pass);
+        await loadSettings(); // Force-sync settings from Firestore on successful login
         hideLoginScreen();
         showSection('dashboard');
         applyRoleUI();
