@@ -233,15 +233,23 @@ async function loadSettings(forceRestart = false) {
         if (initialDoc.exists) {
             const c = initialDoc.data();
             lastSyncTimestamp = new Date();
-            currentSyncState = 'synced'; // Mark as synced if fetch succeeds
+            currentSyncState = 'synced'; 
             applySettingsObject(c);
             console.log("☁️ Initial cloud settings fetched:", adminPin);
         } else {
-            currentSyncState = 'offline'; // Document missing
+            // Document missing — try to initialize it if we are Admin
+            console.log("⚠️ Cloud settings missing. Preparation mode active.");
+            currentSyncState = 'offline'; 
+            if (isAdmin()) {
+                console.log("🛠 Auto-initializing cloud settings document...");
+                const config = { campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh };
+                await fsdb.collection('settings').doc('global').set(config);
+                currentSyncState = 'synced';
+                lastSyncTimestamp = new Date();
+            }
         }
     } catch (e) { 
         console.warn("Cloud fetch pending authentication or disconnected", e.message); 
-        // Don't change state here yet, wait for listener
     }
 
     // 3. Setup Persistent Real-time Listener (if not already running)
@@ -253,6 +261,10 @@ async function loadSettings(forceRestart = false) {
                 currentSyncState = 'synced';
                 applySettingsObject(c);
                 console.log("⚡ Real-time settings update received:", adminPin);
+                updateSettingsUI();
+            } else if (currentSyncState !== 'initializing') {
+                // Handle doc being deleted or still missing
+                currentSyncState = 'offline';
                 updateSettingsUI();
             }
         }, e => {
@@ -308,9 +320,9 @@ function updateSettingsUI() {
         } else if (currentSyncState === 'reconnecting') {
             syncStatus.innerHTML = '<span style="color:#f59e0b">● Reconnecting...</span>';
         } else if (currentSyncState === 'initializing') {
-            syncStatus.innerHTML = '<span style="color:#818cf8">● Initializing Sync...</span>';
+            syncStatus.innerHTML = '<span style="color:#818cf8">● Cloud Initializing...</span>';
         } else {
-            syncStatus.innerHTML = '<span style="color:#64748b">● Local Cache Only</span>';
+            syncStatus.innerHTML = '<span style="color:#f43f5e">● Cloud Data Missing (Click Save)</span>';
         }
     }
 
@@ -354,6 +366,9 @@ async function saveSettings() {
     // 3. Sync to Firestore
     try {
         await fsdb.collection('settings').doc('global').set(config, { merge: true });
+        currentSyncState = 'synced';
+        lastSyncTimestamp = new Date();
+        updateSettingsUI();
         toast('Settings synced across devices!', 'success');
     } catch (e) {
         toast('Sync failed: ' + e.message, 'error');
