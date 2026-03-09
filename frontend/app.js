@@ -150,6 +150,8 @@ let allEmployees = [];
 let chart7day = null;
 let chartDept = null;
 let settingsListener = null; // for real-time sync
+let lastSyncTimestamp = null; // for UI feedback
+
 
 // ====== Audio Feedback ======
 let audioCtx = null;
@@ -226,6 +228,7 @@ async function loadSettings(forceRestart = false) {
         const initialDoc = await fsdb.collection('settings').doc('global').get();
         if (initialDoc.exists) {
             const c = initialDoc.data();
+            lastSyncTimestamp = new Date();
             applySettingsObject(c);
             console.log("☁️ Initial cloud settings fetched:", adminPin);
         }
@@ -238,6 +241,7 @@ async function loadSettings(forceRestart = false) {
         settingsListener = fsdb.collection('settings').doc('global').onSnapshot(doc => {
             if (doc.exists) {
                 const c = doc.data();
+                lastSyncTimestamp = new Date();
                 applySettingsObject(c);
                 console.log("⚡ Real-time settings update received:", adminPin);
                 updateSettingsUI(true);
@@ -297,6 +301,19 @@ function updateSettingsUI(isSynced = null) {
             syncStatus.innerHTML = '<span style="color:#818cf8">● Initializing Sync...</span>';
         } else {
             syncStatus.innerHTML = '<span style="color:#64748b">● Local Cache Only</span>';
+        }
+    }
+
+    // Update Last Sync Pulse
+    const pulse = document.getElementById('last-sync-pulse');
+    if (pulse) {
+        if (lastSyncTimestamp) {
+            const time = lastSyncTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            pulse.textContent = 'Last Sync: ' + time;
+            pulse.style.color = '#10b981'; // Green on success
+        } else {
+            pulse.textContent = 'Last Sync: Waiting...';
+            pulse.style.color = '#4F46E5';
         }
     }
     
