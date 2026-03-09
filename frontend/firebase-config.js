@@ -13,3 +13,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const fsdb = firebase.firestore();
 const auth = firebase.auth();
+
+// Enable multi-tab persistence for high-reliability mobile sync
+fsdb.enablePersistence({synchronizeTabs: true}).catch(err => {
+    if (err.code == 'failed-precondition') {
+        console.warn("Firestore Persistence: Multiple tabs open, persistence limited to one tab");
+    } else if (err.code == 'unimplemented') {
+        console.warn("Firestore Persistence: Browser does not support persistence");
+    }
+});

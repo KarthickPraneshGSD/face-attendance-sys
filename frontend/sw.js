@@ -1,4 +1,4 @@
-const CACHE = 'facesync-v5';
+const CACHE = 'facesync-v6';
 
 self.addEventListener('install', e => {
     self.skipWaiting();
@@ -17,6 +17,13 @@ self.addEventListener('fetch', e => {
     // Only cache GET requests from same origin
     if (e.request.method !== 'GET') return;
     const url = new URL(e.request.url);
+    
+    // EXCLUDE Firebase SDK requests from being intercepted by the Service Worker
+    // This prevents the SW from interfering with Firestore real-time listeners (WebSockets/Long-polling)
+    if (url.hostname.includes('googleapis.com') || url.hostname.includes('firebaseapp.com')) {
+        return; 
+    }
+
     if (url.origin !== location.origin) {
         // For CDN/external: network first, fallback to cache
         e.respondWith(

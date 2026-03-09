@@ -201,6 +201,7 @@ function toast(msg, type = 'info', duration = 4000) {
 // ====== Settings ======
 async function loadSettings(forceRestart = false) {
     console.log("🔄 Initializing Settings Sync... (Force: " + forceRestart + ")");
+    updateSettingsUI('initializing');
     if (forceRestart && settingsListener) {
         settingsListener(); // Unsubscribe existing listener
         settingsListener = null;
@@ -242,11 +243,16 @@ async function loadSettings(forceRestart = false) {
                 updateSettingsUI(true);
             }
         }, e => {
-            console.error("❌ Sync Error:", e.message);
-            updateSettingsUI(false);
+            console.error("❌ Sync Error:", e.code, e.message);
+            if (e.code === 'permission-denied') {
+                updateSettingsUI('denied');
+                toast('Access Denied: Please check Firestore rules in Console', 'error', 8000);
+            } else {
+                updateSettingsUI(false);
+            }
             // Auto-retry listener if it dies (e.g. network change) with a small delay
             settingsListener = null; 
-            setTimeout(() => loadSettings(), 3000);
+            setTimeout(() => { if (!settingsListener) loadSettings(); }, 5000);
         });
     }
 
@@ -281,12 +287,16 @@ function updateSettingsUI(isSynced = null) {
     const syncStatus = document.getElementById('sync-status');
     if (syncStatus) {
         if (isSynced === true) {
-            syncStatus.innerHTML = '<span style="color:#10b981">● Cloud Synced</span>';
+            syncStatus.innerHTML = '<span style="color:#10b981">● Cloud Connected</span>';
             console.log("PIN Synced: " + adminPin);
+        } else if (isSynced === 'denied') {
+            syncStatus.innerHTML = '<span style="color:#f43f5e">● Access Denied (Check Rules)</span>';
         } else if (isSynced === false) {
-            syncStatus.innerHTML = '<span style="color:#f43f5e">● Sync Offline</span>';
+            syncStatus.innerHTML = '<span style="color:#f59e0b">● Reconnecting...</span>';
+        } else if (isSynced === 'initializing') {
+            syncStatus.innerHTML = '<span style="color:#818cf8">● Initializing Sync...</span>';
         } else {
-            syncStatus.innerHTML = '<span style="color:#64748b">● Local Cache</span>';
+            syncStatus.innerHTML = '<span style="color:#64748b">● Local Cache Only</span>';
         }
     }
     
