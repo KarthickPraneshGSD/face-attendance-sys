@@ -209,12 +209,25 @@ async function loadSettings() {
         confidenceThresh = c.confidenceThresh || 0.4;
     }
 
-    // 2. Setup Real-time Sync from Firestore
+    // 2. Initial Fetch and Setup Real-time Sync from Firestore
     try {
-        if (settingsListener) settingsListener(); // unsubscribe old if any
-        
-        const settingsRef = fsdb.collection('settings').doc('global');
-        settingsListener = settingsRef.onSnapshot(doc => {
+        // Initial fetch to guarantee data before the function returns
+        const initialDoc = await fsdb.collection('settings').doc('global').get();
+        if (initialDoc.exists) {
+            const c = initialDoc.data();
+            campusHQ = c.campusHQ || campusHQ;
+            geofenceRadius = c.geofenceRadius || 500;
+            shiftStart = c.shiftStart || '09:00';
+            adminPin = c.adminPin || '1234';
+            overtimeHours = c.overtimeHours || 9;
+            confidenceThresh = c.confidenceThresh || 0.4;
+            localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
+            updateSettingsUI();
+        }
+
+        // Setup listener for future changes
+        if (settingsListener) settingsListener(); 
+        settingsListener = fsdb.collection('settings').doc('global').onSnapshot(doc => {
             if (doc.exists) {
                 const c = doc.data();
                 campusHQ = c.campusHQ || campusHQ;
@@ -223,17 +236,14 @@ async function loadSettings() {
                 adminPin = c.adminPin || '1234';
                 overtimeHours = c.overtimeHours || 9;
                 confidenceThresh = c.confidenceThresh || 0.4;
-                
-                // Update local inputs and cache
                 localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
                 updateSettingsUI();
-                console.log("Settings synced from Firestore");
             }
         }, e => {
-            console.warn("Real-time settings sync blocked (likely unauthenticated yet)");
+            console.warn("Real-time settings sync pending authentication...");
         });
     } catch (e) { 
-        console.error("Failed to setup settings listener", e); 
+        console.error("Failed to setup settings sync", e); 
     }
 
     updateSettingsUI();
