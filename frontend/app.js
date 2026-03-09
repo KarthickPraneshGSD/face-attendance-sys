@@ -237,19 +237,21 @@ async function loadSettings() {
                 overtimeHours = c.overtimeHours || 9;
                 confidenceThresh = c.confidenceThresh || 0.4;
                 localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
-                updateSettingsUI();
+                updateSettingsUI(true);
             }
         }, e => {
             console.warn("Real-time settings sync pending authentication...");
+            updateSettingsUI(false);
         });
     } catch (e) { 
         console.error("Failed to setup settings sync", e); 
+        updateSettingsUI(false);
     }
 
     updateSettingsUI();
 }
 
-function updateSettingsUI() {
+function updateSettingsUI(isSynced = null) {
     const hl = document.getElementById('hq-lat'); if (hl) hl.value = (campusHQ.lat || 0);
     const hln = document.getElementById('hq-lng'); if (hln) hln.value = (campusHQ.lng || 0);
     const fr = document.getElementById('fence-radius'); if (fr) fr.value = geofenceRadius;
@@ -261,6 +263,19 @@ function updateSettingsUI() {
     if (oth) oth.value = overtimeHours;
     const conf = document.getElementById('conf-thresh');
     if (conf) { conf.value = confidenceThresh; document.getElementById('conf-val').textContent = confidenceThresh; }
+
+    // Sync status indicator
+    const syncStatus = document.getElementById('sync-status');
+    if (syncStatus) {
+        if (isSynced === true) {
+            syncStatus.innerHTML = '<span style="color:#10b981">● Cloud Synced</span>';
+            console.log("PIN Synced: " + adminPin);
+        } else if (isSynced === false) {
+            syncStatus.innerHTML = '<span style="color:#f43f5e">● Sync Offline</span>';
+        } else {
+            syncStatus.innerHTML = '<span style="color:#64748b">● Local Cache</span>';
+        }
+    }
     
     // Apply saved theme
     const theme = localStorage.getItem('theme') || 'dark';
@@ -515,6 +530,7 @@ async function handleAttendance(name, landmarks) {
         const dist = haversine(loc.lat, loc.lng, campusHQ.lat, campusHQ.lng);
         if (dist > geofenceRadius) {
             toast('GEOFENCE: ' + Math.round(dist) + 'm away (max ' + geofenceRadius + 'm)', 'error', 6000);
+            isKioskShuttingDown = false; // Reset to allow retry
             return;
         }
         const last = await getLastPunch(emp.id);
@@ -531,13 +547,14 @@ async function handleAttendance(name, landmarks) {
         playPunchSound(status === 'IN');
         speakName(emp.name, status);
 
-        // Auto-stop the camera after a successful punch to prevent double scanning
-        
     } catch (e) {
         toast('Attendance failed: ' + e.message, 'error');
         punchCooldown.delete(name);
+        isKioskShuttingDown = false; // Reset block on error
     } finally {
         processingSet.delete(name);
+        const prompt = document.getElementById('liveness-prompt');
+        if (prompt) prompt.style.display = 'none';
     }
 }
 function isAfterShift(ts) {
