@@ -193,35 +193,55 @@ function toast(msg, type = 'info', duration = 4000) {
 }
 
 // ====== Settings ======
-function loadSettings() {
-    const s = localStorage.getItem('fsSett');
-    if (s) {
-        const c = JSON.parse(s);
+// ====== Settings ======
+async function loadSettings() {
+    // 1. Load from Local Storage first as a fast fallback
+    const local = localStorage.getItem('fsSett');
+    if (local) {
+        const c = JSON.parse(local);
         campusHQ = c.campusHQ || campusHQ;
         geofenceRadius = c.geofenceRadius || 500;
         shiftStart = c.shiftStart || '09:00';
         adminPin = c.adminPin || '1234';
         overtimeHours = c.overtimeHours || 9;
-        confidenceThresh = c.confidenceThresh || 0.5;
+        confidenceThresh = c.confidenceThresh || 0.4;
     }
-    document.getElementById('hq-lat').value = campusHQ.lat;
-    document.getElementById('hq-lng').value = campusHQ.lng;
-    document.getElementById('fence-radius').value = geofenceRadius;
-    document.getElementById('shift-time').value = shiftStart;
-    document.getElementById('admin-pin').value = adminPin;
+
+    // 2. Fetch Global Sync from Firestore
+    try {
+        const doc = await fsdb.collection('settings').doc('global').get();
+        if (doc.exists) {
+            const c = doc.data();
+            campusHQ = c.campusHQ || campusHQ;
+            geofenceRadius = c.geofenceRadius || 500;
+            shiftStart = c.shiftStart || '09:00';
+            adminPin = c.adminPin || '1234';
+            overtimeHours = c.overtimeHours || 9;
+            confidenceThresh = c.confidenceThresh || 0.4;
+            // Update local cache
+            localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
+        }
+    } catch (e) { console.error("Settings sync failed", e); }
+
+    const hl = document.getElementById('hq-lat'); if (hl) hl.value = campusHQ.lat;
+    const hln = document.getElementById('hq-lng'); if (hln) hln.value = campusHQ.lng;
+    const fr = document.getElementById('fence-radius'); if (fr) fr.value = geofenceRadius;
+    const st = document.getElementById('shift-time'); if (st) st.value = shiftStart;
+    const ap = document.getElementById('admin-pin'); if (ap) ap.value = adminPin;
     const ll = document.getElementById('light-level');
     if (ll) ll.value = localStorage.getItem('lightLevel') || '2';
     const oth = document.getElementById('ot-hours');
     if (oth) oth.value = overtimeHours;
     const conf = document.getElementById('conf-thresh');
     if (conf) { conf.value = confidenceThresh; document.getElementById('conf-val').textContent = confidenceThresh; }
+    
     // Apply saved theme
     const theme = localStorage.getItem('theme') || 'dark';
     document.body.setAttribute('data-theme', theme);
     const icon = document.getElementById('theme-icon');
     if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
 }
-function saveSettings() {
+async function saveSettings() {
     campusHQ = {
         lat: parseFloat(document.getElementById('hq-lat').value) || campusHQ.lat,
         lng: parseFloat(document.getElementById('hq-lng').value) || campusHQ.lng
@@ -230,12 +250,24 @@ function saveSettings() {
     shiftStart = document.getElementById('shift-time').value || '09:00';
     adminPin = document.getElementById('admin-pin').value || '1234';
     overtimeHours = parseFloat(document.getElementById('ot-hours').value) || 9;
-    confidenceThresh = parseFloat(document.getElementById('conf-thresh').value) || 0.5;
+    confidenceThresh = parseFloat(document.getElementById('conf-thresh').value) || 0.4;
     const ll = document.getElementById('light-level');
     if (ll) localStorage.setItem('lightLevel', ll.value);
-    localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
-    buildMatcher();  // rebuild with new confidence threshold
-    toast('Settings saved!', 'success');
+    
+    const config = { campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh };
+    
+    // Save to local cache
+    localStorage.setItem('fsSett', JSON.stringify(config));
+    
+    // 3. Sync to Firestore
+    try {
+        await fsdb.collection('settings').doc('global').set(config, { merge: true });
+        toast('Settings synced across devices!', 'success');
+    } catch (e) {
+        toast('Sync failed: ' + e.message, 'error');
+    }
+
+    buildMatcher();
     showSection('dashboard');
 }
 function toggleTheme() {
@@ -1128,7 +1160,7 @@ function updateClock() {
 window.onload = async () => {
     setInterval(updateClock, 1000);
     updateClock();
-    loadSettings();
+    await loadSettings();
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(() => { });
