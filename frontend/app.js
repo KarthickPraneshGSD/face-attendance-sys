@@ -145,6 +145,7 @@ let allLogs = [];
 let allEmployees = [];
 let chart7day = null;
 let chartDept = null;
+let settingsListener = null; // for real-time sync
 
 // ====== Audio Feedback ======
 let audioCtx = null;
@@ -207,24 +208,39 @@ async function loadSettings() {
         confidenceThresh = c.confidenceThresh || 0.4;
     }
 
-    // 2. Fetch Global Sync from Firestore
+    // 2. Setup Real-time Sync from Firestore
     try {
-        const doc = await fsdb.collection('settings').doc('global').get();
-        if (doc.exists) {
-            const c = doc.data();
-            campusHQ = c.campusHQ || campusHQ;
-            geofenceRadius = c.geofenceRadius || 500;
-            shiftStart = c.shiftStart || '09:00';
-            adminPin = c.adminPin || '1234';
-            overtimeHours = c.overtimeHours || 9;
-            confidenceThresh = c.confidenceThresh || 0.4;
-            // Update local cache
-            localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
-        }
-    } catch (e) { console.error("Settings sync failed", e); }
+        if (settingsListener) settingsListener(); // unsubscribe old if any
+        
+        const settingsRef = fsdb.collection('settings').doc('global');
+        settingsListener = settingsRef.onSnapshot(doc => {
+            if (doc.exists) {
+                const c = doc.data();
+                campusHQ = c.campusHQ || campusHQ;
+                geofenceRadius = c.geofenceRadius || 500;
+                shiftStart = c.shiftStart || '09:00';
+                adminPin = c.adminPin || '1234';
+                overtimeHours = c.overtimeHours || 9;
+                confidenceThresh = c.confidenceThresh || 0.4;
+                
+                // Update local inputs and cache
+                localStorage.setItem('fsSett', JSON.stringify({ campusHQ, geofenceRadius, shiftStart, adminPin, overtimeHours, confidenceThresh }));
+                updateSettingsUI();
+                console.log("Settings synced from Firestore");
+            }
+        }, e => {
+            console.warn("Real-time settings sync blocked (likely unauthenticated yet)");
+        });
+    } catch (e) { 
+        console.error("Failed to setup settings listener", e); 
+    }
 
-    const hl = document.getElementById('hq-lat'); if (hl) hl.value = campusHQ.lat;
-    const hln = document.getElementById('hq-lng'); if (hln) hln.value = campusHQ.lng;
+    updateSettingsUI();
+}
+
+function updateSettingsUI() {
+    const hl = document.getElementById('hq-lat'); if (hl) hl.value = (campusHQ.lat || 0);
+    const hln = document.getElementById('hq-lng'); if (hln) hln.value = (campusHQ.lng || 0);
     const fr = document.getElementById('fence-radius'); if (fr) fr.value = geofenceRadius;
     const st = document.getElementById('shift-time'); if (st) st.value = shiftStart;
     const ap = document.getElementById('admin-pin'); if (ap) ap.value = adminPin;
@@ -1174,6 +1190,7 @@ window.onload = async () => {
                 currentUser = { uid: user.uid, role: 'admin', empId: null };
                 hideLoginScreen();
                 applyRoleUI();
+                await loadSettings(); // Re-sync now that we are authenticated
                 await refreshDashboard();
                 await loadModels();
             } else {
