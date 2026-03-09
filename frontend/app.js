@@ -137,7 +137,7 @@ let geofenceRadius = 500;
 let shiftStart = '09:00';
 let adminPin = '1234';
 let overtimeHours = 9;       // hours/day before OT flag
-let confidenceThresh = 0.5;  // face match distance threshold
+let confidenceThresh = 0.4;  // face match distance threshold (lowered for higher precision)
 let pinUnlockedUntil = 0;
 let pendingSection = null;
 let currentPin = '';
@@ -318,6 +318,7 @@ let kioskRunning = false;
 let gpsIntervalId = null;
 const processingSet = new Set();
 const punchCooldown = new Map();
+let isKioskShuttingDown = false; // session lock for single-punch logic
 
 // ====== Liveness Detection ======
 // livenessState per employee: { state:'idle'|'waiting'|'confirmed', ear:[], timer:null }
@@ -346,7 +347,7 @@ function startLivenessCheck(name) {
     if (prompt) { prompt.style.display = 'block'; prompt.textContent = '👁 Please blink to verify — ' + name; }
     ls.timer = setTimeout(() => {
         const cur = getLivenessState(name);
-        if (cur.state === 'waiting') {
+        if (cur.state === 'waiting' && !isKioskShuttingDown) {
             cur.state = 'idle';
             punchCooldown.delete(name);  // allow retry
             if (prompt) prompt.style.display = 'none';
@@ -425,6 +426,7 @@ async function buildMatcher() {
 
 // ====== Attendance Logic ======
 async function handleAttendance(name, landmarks) {
+    if (isKioskShuttingDown) return;
     const now = Date.now();
     const lastPunch = punchCooldown.get(name) || 0;
     // Liveness gate: bypass strict blink requirement for speed
@@ -434,7 +436,16 @@ async function handleAttendance(name, landmarks) {
 
     // CRITICAL: Stop the kiosk immediately to prevent double-punches
     // while we process the rest of the attendance logic.
+    isKioskShuttingDown = true;
     stopKiosk();
+
+    // Show processing indicator
+    const prompt = document.getElementById('liveness-prompt');
+    if (prompt) { 
+        prompt.style.display = 'block'; 
+        prompt.textContent = '🔄 Syncing attendance for ' + name + '...'; 
+        prompt.style.background = 'rgba(99,102,241,0.9)';
+    }
 
     processingSet.add(name);
     punchCooldown.set(name, now);
@@ -498,6 +509,7 @@ async function startKiosk() {
         v.srcObject = videoStream;
         document.getElementById('vid-placeholder').style.display = 'none';
         kioskRunning = true;
+        isKioskShuttingDown = false;
         v.onloadedmetadata = () => { v.play(); runDetect(); };
         // Clear any old GPS interval before starting a new one
         if (gpsIntervalId) clearInterval(gpsIntervalId);
@@ -524,30 +536,41 @@ async function runDetect() {
     try {
         // Run detection on brightness-enhanced frame for low-light accuracy
         const source = enhanceFrame(v);
-        const dets = await faceapi.detectAllFaces(source, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        const dets = await faceapi.detectAllFaces(source, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.6 }))
             .withFaceLandmarks().withFaceDescriptors();
-        if (!kioskRunning) return;
+        
+        if (!kioskRunning || isKioskShuttingDown) return;
+        
         const ctx = c.getContext('2d');
         // Draw the enhanced frame onto the visible overlay canvas
         ctx.drawImage(source, 0, 0, c.width, c.height);
-        dets.forEach(d => {
+
+        for (const d of dets) {
             const m = faceMatcher.findBestMatch(d.descriptor);
             const b = d.detection.box, known = m.label !== 'unknown';
+            
             // Box colour: green=confirmed, red=unknown
             ctx.strokeStyle = known ? '#10b981' : '#f43f5e';
             ctx.lineWidth = 2;
             ctx.strokeRect(b.x, b.y, b.width, b.height);
+            
             ctx.fillStyle = known ? 'rgba(16,185,129,.8)' : 'rgba(244,63,94,.8)';
             ctx.fillRect(b.x, b.y - 26, b.width, 26);
             ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Inter';
             const label = m.label + (known ? ' ✓' : ' ?');
             ctx.fillText(label, b.x + 5, b.y - 9);
-            if (known) handleAttendance(m.label, d.landmarks);
-        });
+
+            if (known && !isKioskShuttingDown) {
+                handleAttendance(m.label, d.landmarks);
+                break; // Stop processing further faces once we've found a match
+            }
+        }
     } catch (e) {
         if (!kioskRunning) return;
     }
-    rafId = requestAnimationFrame(runDetect);
+    if (kioskRunning && !isKioskShuttingDown) {
+        rafId = requestAnimationFrame(runDetect);
+    }
 }
 async function handleImageUpload(e) {
     if (!isAIReady) { toast('AI still loading', 'warning'); return; }
