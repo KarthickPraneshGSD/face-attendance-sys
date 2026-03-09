@@ -18,13 +18,16 @@ const deleteEmployee = id => fsdb.collection('employees').doc(String(id)).delete
 // ---- Attendance collection ----
 const logAttendance = rec => fsdb.collection('attendance').add(rec);
 const getAttendance = async () => {
-    let query = fsdb.collection('attendance').orderBy('timestamp', 'asc');
+    let query = fsdb.collection('attendance');
     // Employees only see their own records
     if (currentUser && currentUser.role === 'employee') {
         query = query.where('employee_id', '==', currentUser.empId);
     }
     const snap = await query.get();
-    return snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    const docs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+    // Sort ascending by timestamp locally to avoid complex Firestore indexing
+    docs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    return docs;
 };
 const getLastPunch = async id => {
     // Avoid orderBy('timestamp') here to prevent Firestore Composite Index errors.
