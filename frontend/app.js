@@ -87,7 +87,7 @@ async function handleAdminLogin() {
     btn.disabled = true; btn.textContent = 'Signing in...';
     try {
         await signInAdmin(email, pass);
-        await loadSettings(); // Force-sync settings from Firestore on successful login
+        await loadSettings(true); // Force-sync settings from Firestore on successful login
         hideLoginScreen();
         showSection('dashboard');
         applyRoleUI();
@@ -199,8 +199,12 @@ function toast(msg, type = 'info', duration = 4000) {
 
 // ====== Settings ======
 // ====== Settings ======
-async function loadSettings() {
-    console.log("🔄 Initializing Settings Sync...");
+async function loadSettings(forceRestart = false) {
+    console.log("🔄 Initializing Settings Sync... (Force: " + forceRestart + ")");
+    if (forceRestart && settingsListener) {
+        settingsListener(); // Unsubscribe existing listener
+        settingsListener = null;
+    }
     // 1. Load from Local Storage first as a fast fallback
     const local = localStorage.getItem('fsSett');
     if (local) {
@@ -1226,7 +1230,7 @@ window.onload = async () => {
                 currentUser = { uid: user.uid, role: 'admin', empId: null };
                 hideLoginScreen();
                 applyRoleUI();
-                await loadSettings(); // Re-sync now that we are authenticated
+                await loadSettings(true); // Re-sync now that we are authenticated
                 await refreshDashboard();
                 await loadModels();
             } else {
